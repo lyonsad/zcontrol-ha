@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Z-Control Account",
+        "description": "Enter your Z-Control cloud account credentials (zcontrolcloud.com)",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Z-Control",
+        "description": "Your session has expired. Please enter the password for {email}",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password",
+      "cannot_connect": "Unable to connect to Z-Control cloud service",
+      "unknown": "An unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This account is already configured",
+      "reauth_successful": "Re-authentication successful"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "input_1": {
+        "name": "Input 1"
+      },
+      "input_2": {
+        "name": "Input 2"
+      },
+      "ac_power": {
+        "name": "AC Power"
+      },
+      "battery": {
+        "name": "Battery"
+      }
+    },
+    "sensor": {
+      "wifi_signal": {
+        "name": "WiFi Signal"
+      },
+      "alarm_count": {
+        "name": "Alarm Count"
+      },
+      "last_heartbeat": {
+        "name": "Last Heartbeat"
+      },
+      "firmware": {
+        "name": "Firmware Version"
+      }
+    },
+    "button": {
+      "silence_alarm": {
+        "name": "Silence Alarm"
+      },
+      "reset_device": {
+        "name": "Reset Device"
+      }
+    }
+  }
+}

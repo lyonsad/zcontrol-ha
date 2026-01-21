@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# HAR files (may contain credentials)
+*.har
+
+# Claude files
+.claude/
+
+# Development notes
+setup.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Virtual environments
+venv/
+.venv/
