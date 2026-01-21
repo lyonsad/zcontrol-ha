@@ -35,35 +35,51 @@ class ZControlCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         - devices: Flattened dict of device_id -> device data for easy lookup
         """
         try:
-            locations = await self.client.get_devices()
+            return await self._fetch_devices()
 
-            # Build a flattened device lookup for easy access
-            devices: dict[str, dict[str, Any]] = {}
-            for location in locations:
-                location_name = location.get("locationName", "Unknown")
-                for device in location.get("devices", []):
-                    device_id = device.get("deviceID")
-                    if device_id:
-                        # Add location info to device
-                        device["locationName"] = location_name
-                        device["locationID"] = location.get("locationID")
-                        device["locationHasFault"] = location.get("locationHasFault", False)
-                        devices[device_id] = device
+        except ZControlAuthError:
+            # Token expired - try to re-authenticate automatically
+            _LOGGER.debug("Auth token expired, attempting to re-authenticate")
+            try:
+                await self.client.authenticate()
+                _LOGGER.info("Successfully re-authenticated with Z-Control")
+                # Retry the API call with the new token
+                return await self._fetch_devices()
+            except (ZControlAuthError, ZControlApiError) as reauth_err:
+                # Re-authentication failed - credentials may have changed
+                _LOGGER.warning("Re-authentication failed: %s", reauth_err)
+                raise ConfigEntryAuthFailed(
+                    "Failed to re-authenticate. Please update your credentials."
+                ) from reauth_err
 
-            return {
-                "locations": locations,
-                "devices": devices,
-            }
-
-        except ZControlAuthError as err:
-            # This will trigger the reauth flow
-            raise ConfigEntryAuthFailed(str(err)) from err
         except ZControlApiError as err:
             # This will retry at the next interval
             raise UpdateFailed(str(err)) from err
         except Exception as err:
             _LOGGER.exception("Unexpected error fetching Z-Control data")
             raise UpdateFailed(f"Unexpected error: {err}") from err
+
+    async def _fetch_devices(self) -> dict[str, Any]:
+        """Fetch and process device data from the API."""
+        locations = await self.client.get_devices()
+
+        # Build a flattened device lookup for easy access
+        devices: dict[str, dict[str, Any]] = {}
+        for location in locations:
+            location_name = location.get("locationName", "Unknown")
+            for device in location.get("devices", []):
+                device_id = device.get("deviceID")
+                if device_id:
+                    # Add location info to device
+                    device["locationName"] = location_name
+                    device["locationID"] = location.get("locationID")
+                    device["locationHasFault"] = location.get("locationHasFault", False)
+                    devices[device_id] = device
+
+        return {
+            "locations": locations,
+            "devices": devices,
+        }
 
     def get_device(self, device_id: str) -> dict[str, Any] | None:
         """Get device data by ID."""
