@@ -79,6 +79,7 @@ DETAIL_SENSOR_DESCRIPTIONS: tuple[ZControlDetailSensorDescription, ...] = (
         detail_name="Battery Voltage",
         value_unit="V",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        suggested_display_precision=2,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
