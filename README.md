@@ -170,8 +170,14 @@ Existing AC Power status mappings take priority over the 508 fallback.
 | `sensor.*_operational_float_count` | Operational Float Count | count |
 | `sensor.*_high_water_float_count` | High Water Float Count | count |
 | `sensor.*_pump_runtime` | Pump Runtime | minutes |
-| `sensor.*_system_run_time` | System Run Time | minutes |
-| `sensor.*_up_time` | Up Time | minutes |
+| `sensor.*_system_run_time` | System Run Time | days (display); minutes (native) |
+| `sensor.*_up_time` | Up Time | days (display); minutes (native) |
+
+System runtime and uptime suggest days as the display unit so current Home Assistant
+shows days and hours together. You can choose hours (hours/minutes) or minutes in
+each sensor's settings. Automations must check the entity's selected unit; native
+values remain minutes for conversion and statistics. Existing entity unit preferences
+are respected, so change those settings manually when upgrading.
 
 Only reported readings are created. Portal duration text is converted to minutes
 (e.g. `1 Hour, 30 Mins` becomes `90`). Unsupported units or missing values produce
