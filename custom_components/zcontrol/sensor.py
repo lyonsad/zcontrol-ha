@@ -167,7 +167,7 @@ def parse_detail_value(value: Any, unit: str) -> float | int | None:
         return None
     if unit == "duration":
         # The portal reports e.g. "1 Min" or "13 Hours, 40 Mins".
-        pattern = r"(\d+)\s*(Days?|Hours?|Mins?|Minutes?|Secs?|Seconds?)"
+        pattern = r"(\d+)\s*(Days?|Hours?|Minutes?|Mins?|Seconds?|Secs?)"
         parts = re.findall(pattern, value, re.IGNORECASE)
         if not parts or re.sub(pattern, "", value, flags=re.IGNORECASE).strip(" ,"):
             return None

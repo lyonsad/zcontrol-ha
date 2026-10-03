@@ -47,6 +47,8 @@ async def test_ac_power_on_polarity(asserted, expected):
         ("13 Hours, 40 Mins", "duration", 820),
         ("1 Day, 2 Hours, 3 Mins", "duration", 1563),
         ("30 Secs", "duration", 0.5),
+        ("2 Minutes", "duration", 2),
+        ("30 Seconds", "duration", 0.5),
         ("0 Mins", "duration", 0),
         ("unknown", "V", None),
         ("12.7 mV", "V", None),
