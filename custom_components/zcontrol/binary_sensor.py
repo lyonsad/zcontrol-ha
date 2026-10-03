@@ -76,6 +76,28 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[ZControlBinarySensorEntityDescription, ...] = 
 )
 
 
+ADDITIONAL_STATUS_DESCRIPTIONS: tuple[ZControlBinarySensorEntityDescription, ...] = (
+    ZControlBinarySensorEntityDescription(
+        key="system_ready",
+        name="System Ready Alarm",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        status_name="System Ready",
+    ),
+    ZControlBinarySensorEntityDescription(
+        key="dc_pump",
+        name="DC Pump Alarm",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        status_name="DC Pump",
+    ),
+    ZControlBinarySensorEntityDescription(
+        key="float_status",
+        name="Float Status Alarm",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        status_name="Float Status",
+    ),
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ZControlConfigEntry,
@@ -84,7 +106,17 @@ async def async_setup_entry(
     """Set up Z-Control binary sensors from a config entry."""
     coordinator = entry.runtime_data.coordinator
 
-    def create_entities(device_id: str, device: dict[str, Any]) -> list[ZControlBinarySensor]:
+    def create_entities(
+        device_id: str, device: dict[str, Any]
+    ) -> list[ZControlBinarySensor]:
+        # Keep legacy entities and IDs; add only statuses reported by the device.
+        descriptions = list(BINARY_SENSOR_DESCRIPTIONS)
+        for description in ADDITIONAL_STATUS_DESCRIPTIONS:
+            if (
+                coordinator.get_device_status(device_id, description.status_name)
+                is not None
+            ):
+                descriptions.append(description)
         return [
             ZControlBinarySensor(
                 coordinator=coordinator,
@@ -92,7 +124,7 @@ async def async_setup_entry(
                 device=device,
                 description=description,
             )
-            for description in BINARY_SENSOR_DESCRIPTIONS
+            for description in descriptions
         ]
 
     async_setup_entities(entry, async_add_entities, create_entities)
