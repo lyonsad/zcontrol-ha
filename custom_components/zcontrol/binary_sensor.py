@@ -192,6 +192,17 @@ class ZControlBinarySensor(CoordinatorEntity[ZControlCoordinator], BinarySensorE
         status_name = self.entity_description.status_name
         if status_name:
             status = self.coordinator.get_device_status(self._device_id, status_name)
+            if status is None and key == "ac_power":
+                # The 508 portal asserts AC Power On when mains is present.
+                # Keep the existing problem-sensor polarity and legacy mapping.
+                power = self.coordinator.get_device_status(
+                    self._device_id, "AC Power On"
+                )
+                if power is not None:
+                    asserted = power.get("assertedValue")
+                    if isinstance(asserted, (bool, int)) and asserted in (0, 1):
+                        return not bool(asserted)
+                return None
             if status:
                 # Check for fault or active alarm
                 is_fault = status.get("isFault", 0)

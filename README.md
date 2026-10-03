@@ -11,13 +11,14 @@ This integration connects to the Z-Control cloud service (zcontrolcloud.com) to 
 - **Binary Sensors**: Monitor alarm states
   - Online status (device connectivity)
   - APak: Input 1, Input 2, AC Power fault, and Battery fault
-  - Aquanot 508: System Ready, DC Pump, Float Status alarms, and Battery fault
+  - Aquanot 508: System Ready, DC Pump, Float Status alarms, AC Power fault, and Battery fault
 
 - **Sensors**: Device information
   - WiFi signal strength
   - Alarm count
   - Last heartbeat timestamp
   - Firmware version
+  - 508 battery voltage, battery/DC pump currents, float counts, and runtimes
 
 - **Buttons**: Device controls
   - Silence Alarm
@@ -94,6 +95,7 @@ assuming that the API's `family` field is a product model number.
 | `binary_sensor.*_system_ready_alarm` | System Ready | A reported readiness fault/alarm. This is a problem sensor: `on` means a problem, not that the system is ready. It is not an AC-power-only sensor. |
 | `binary_sensor.*_dc_pump_alarm` | DC Pump | A reported DC pump fault/alarm, not a pump-running or cycle-count sensor. |
 | `binary_sensor.*_float_status_alarm` | Float Status | A reported float fault/alarm; do not assume every float fault means high water. Check Z-Control for details. |
+| `binary_sensor.*_ac_power` | AC Power On | Uses the portal's `assertedValue`: mains present (`1`) means `off`/OK; mains absent (`0`) means `on`/problem. Missing or invalid values remain `unknown`. |
 
 The existing Battery entity also applies to the 508. These statuses describe the
 backup controller and DC pump; they do not independently prove the primary AC
@@ -119,8 +121,8 @@ The manufacturer's indicator table distinguishes these conditions:
 
 These Home Assistant binary sensors expose the existing cloud fault/alarm flags,
 not the complete indicator table. The manual documents controller behavior,
-not numeric cloud API values. Separate high-water, pump-running, AC-loss, or
-battery-level entities need verified cloud payload fields and value mappings;
+not numeric cloud API values. Separate high-water and pump-running binary entities need verified cloud
+payload fields and value mappings;
 they cannot safely be inferred from LED colors or the two unknown Input entities.
 
 For compatibility, the original Online, Input 1, Input 2, AC Power, and Battery
@@ -131,12 +133,42 @@ silently reassigned to a different status, so existing automations keep their
 meaning. Other models keep their existing entities and status interpretation;
 the additional sensors are created only for statuses actually reported.
 
-All problem sensors use the existing integration rule: `on` if `isFault` or
+Except for the 508 AC Power mapping above, problem sensors use the existing rule: `on` if `isFault` or
 `alarmActiveValue` is truthy, otherwise `off` for a present status. `unknown`
 means the expected device or status entry is missing. `unavailable` means an update
 failed or the device disappeared from the cloud response. Neither means healthy.
 Newly reported additional statuses are discovered at setup; reload the integration
 if a firmware update changes the list.
+
+### 508 numerical readings
+
+The integration reads the same two detail endpoints as the portal for devices
+reporting System Ready, DC Pump, and Float Status. This adds two read-only requests
+per such device per update; other devices retain their existing request behavior.
+Existing AC Power status mappings take priority over the 508 fallback.
+
+| Entity suffix | Portal reading | Unit |
+|---------------|----------------|------|
+| `sensor.*_battery_voltage` | Battery Voltage | V |
+| `sensor.*_battery_current` | Battery Current | A |
+| `sensor.*_dc_pump_current` | DC Pump Current | A |
+| `sensor.*_operational_float_count` | Operational Float Count | count |
+| `sensor.*_high_water_float_count` | High Water Float Count | count |
+| `sensor.*_pump_runtime` | Pump Runtime | minutes |
+| `sensor.*_system_run_time` | System Run Time | minutes |
+| `sensor.*_up_time` | Up Time | minutes |
+
+Only reported readings are created. Portal duration text is converted to minutes
+(e.g. `1 Hour, 30 Mins` becomes `90`). Unsupported units or missing values produce
+`unknown`. If a detail request fails, its readings become unknown while the main
+status response remains available; authentication errors follow the normal
+reauthentication path. Reload after a first-time detail outage to discover readings.
+
+Float counts and runtimes are controller-reported counters, not live switch states
+or an independent measurement of the primary AC pump. Counters may reset; uptime
+is treated as a measurement. Battery voltage is not a battery charge percentage.
+The detail formats were verified against the English portal; localized formats
+are not guessed or silently treated as zero.
 
 ## Usage examples
 
