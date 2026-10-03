@@ -8,6 +8,7 @@ import pytest
 from custom_components.zcontrol.api import ZControlApiError, ZControlAuthError
 from custom_components.zcontrol.coordinator import ZControlCoordinator
 from custom_components.zcontrol.sensor import (
+    DETAIL_SENSOR_DESCRIPTIONS,
     async_setup_entry,
     parse_detail_value,
 )
@@ -148,3 +149,15 @@ async def test_malformed_optional_lists(hass):
     payload = {}
     await ZControlCoordinator(hass, client)._fetch_device_details("test-508", payload)
     assert payload == {"statusDetails": [], "sensorDetails": []}
+
+
+def test_long_runtime_display_units():
+    from homeassistant.const import UnitOfTime
+
+    descriptions = {
+        description.key: description for description in DETAIL_SENSOR_DESCRIPTIONS
+    }
+    for key in ("system_run_time", "up_time"):
+        assert descriptions[key].native_unit_of_measurement == UnitOfTime.MINUTES
+        assert descriptions[key].suggested_unit_of_measurement == UnitOfTime.DAYS
+    assert descriptions["pump_runtime"].suggested_unit_of_measurement is None
